@@ -1,4 +1,10 @@
-loadlib("target/release/libbasic_extension.so")
+if isWindows()
+    loadlib("target/release/basic_extension.dll")
+elseif isMacOSX()
+    loadlib("target/release/libbasic_extension.dylib")
+else
+    loadlib("target/release/libbasic_extension.so")
+ok
 
 ? "Testing Basic Rust Extension"
 ? "============================"
