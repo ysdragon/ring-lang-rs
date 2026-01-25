@@ -6,11 +6,37 @@ pub type RingString = *mut String;
 pub type RingList = *mut List;
 pub type RingItem = *mut Item;
 pub type RingVM = *mut VM;
+pub type RingByteCode = *mut ByteCode;
+pub type RingCFunction = *mut CFunction;
 
 pub const RING_VM_STACK_SIZE: usize = 1004;
+pub const RING_VM_BC_ITEMS_COUNT: usize = 2;
 pub const RING_VM_CUSTOMMUTEX_COUNT: usize = 5;
 pub const RING_FALSE: c_int = 0;
 pub const RING_TRUE: c_int = 1;
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union Register {
+    pub iNumber: c_int,
+    pub pPointer: *mut c_void,
+    pub pString: *const c_char,
+    pub uiNumber: c_uint,
+    pub dNumber: c_double,
+}
+
+#[repr(C)]
+pub struct ByteCode {
+    pub bitfields: u64,
+    pub aReg: [Register; RING_VM_BC_ITEMS_COUNT],
+}
+
+#[repr(C)]
+pub struct CFunction {
+    pub cName: *const c_char,
+    pub pFunc: Option<extern "C" fn(*mut c_void)>,
+    pub pNext: *mut CFunction,
+}
 
 #[repr(C)]
 pub struct FuncCall {
@@ -67,8 +93,8 @@ pub struct VM {
     pub pLiterals: RingList,
     pub pPackageName: RingString,
     pub pTrace: RingString,
-    pub pByteCode: *mut c_void,
-    pub pByteCodeIR: *mut c_void,
+    pub pByteCode: *mut ByteCode,
+    pub pByteCodeIR: *mut ByteCode,
     pub cFileName: *const c_char,
     pub cPrevFileName: *const c_char,
     pub cFileNameInClassRegion: *const c_char,
@@ -79,7 +105,7 @@ pub struct VM {
     pub pFuncMutexLock: Option<extern "C" fn(*mut c_void)>,
     pub pFuncMutexUnlock: Option<extern "C" fn(*mut c_void)>,
     pub pMutex: *mut c_void,
-    pub pCFunction: *mut c_void,
+    pub pCFunction: *mut CFunction,
     pub nCurrentGlobalScope: c_uint,
     pub nOPCode: c_uint,
     pub nSP: c_uint,
