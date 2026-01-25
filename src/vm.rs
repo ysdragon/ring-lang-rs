@@ -1,7 +1,7 @@
 use libc::{c_char, c_int, c_uint, c_void};
 use std::ffi::CString;
 
-use crate::ffi::{self, RingVM, ITEMTYPE_STRING, ITEM_NUMBERFLAG_DOUBLE, RING_FALSE};
+use crate::ffi::{self, ITEM_NUMBERFLAG_DOUBLE, ITEMTYPE_STRING, RING_FALSE, RingVM};
 
 #[inline]
 pub fn ring_vm_callfunction(vm: RingVM, func_name: &[u8]) {

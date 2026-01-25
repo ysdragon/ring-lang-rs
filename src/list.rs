@@ -1,8 +1,8 @@
 use libc::{c_char, c_double, c_int, c_uint, c_void};
 use std::ffi::{CStr, CString};
 
-use crate::ffi;
 use crate::RingList;
+use crate::ffi;
 
 #[inline]
 pub fn ring_list_new(size: c_uint) -> RingList {

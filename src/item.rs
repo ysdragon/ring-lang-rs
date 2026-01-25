@@ -1,8 +1,8 @@
 use libc::{c_char, c_double, c_int, c_uint, c_void};
 
 use crate::ffi::{
-    self, Item, RingItem, ITEMTYPE_FUNCPOINTER, ITEMTYPE_LIST, ITEMTYPE_NOTHING, ITEMTYPE_NUMBER,
-    ITEMTYPE_POINTER, ITEMTYPE_STRING,
+    self, ITEMTYPE_FUNCPOINTER, ITEMTYPE_LIST, ITEMTYPE_NOTHING, ITEMTYPE_NUMBER, ITEMTYPE_POINTER,
+    ITEMTYPE_STRING, Item, RingItem,
 };
 
 #[inline]

@@ -3,8 +3,8 @@ use std::ffi::{CStr, CString};
 
 use crate::ffi::{self, RingString};
 use crate::{
-    RingFunc, RingList, RingState, RING_CPOINTERSTATUS_NOTASSIGNED, RING_CPOINTER_STATUS,
-    RING_OUTPUT_RETLISTBYREF, RING_OUTPUT_RETNEWREF,
+    RING_CPOINTER_STATUS, RING_CPOINTERSTATUS_NOTASSIGNED, RING_OUTPUT_RETLISTBYREF,
+    RING_OUTPUT_RETNEWREF, RingFunc, RingList, RingState,
 };
 
 #[inline]
