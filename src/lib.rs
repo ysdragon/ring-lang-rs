@@ -44,6 +44,12 @@ pub const RING_OUTPUT_RETNEWREF: libc::c_int = 2;
 pub const RING_VARVALUE_INT: libc::c_int = 1;
 pub const RING_VARVALUE_FLOAT: libc::c_int = 2;
 
+pub const RING_VAR_NAME: libc::c_uint = 1;
+pub const RING_VAR_TYPE: libc::c_uint = 2;
+pub const RING_VAR_VALUE: libc::c_uint = 3;
+pub const RING_VAR_PVALUETYPE: libc::c_uint = 4;
+pub const RING_VAR_PRIVATEFLAG: libc::c_uint = 5;
+
 pub const RING_API_MISS1PARA: &[u8] = b"Bad parameters count, the function expect one parameter\0";
 pub const RING_API_MISS2PARA: &[u8] = b"Bad parameters count, the function expect two parameters\0";
 pub const RING_API_MISS3PARA: &[u8] =
