@@ -4,21 +4,67 @@ Rust bindings for the [Ring programming language](https://ring-lang.github.io/).
 
 ## Use Cases
 
-- **Write Ring extensions in Rust** - Create native extensions with Rust's safety and performance
-- **Wrap Rust crates** - Expose any Rust library to Ring applications
-- **Performance-critical code** - Offload CPU-intensive work (parsing, compression, crypto, physics)
-- **System integration** - Access OS APIs, hardware, or FFI libraries not available in Ring
+1. **Write Ring extensions in Rust** - Create native extensions with Rust's safety and performance
+2. **Embed Ring in Rust applications** - Run Ring scripts from your Rust programs
+3. **Wrap Rust crates for Ring** - Expose any Rust library to Ring applications
 
-## Supported Platforms
+## How It Works
+
+```mermaid
+flowchart LR
+    subgraph ext["<b>Extensions</b> (Ring calls Rust)"]
+        direction LR
+        A["Ring Program<br/><code>.ring</code>"] -->|"loadlib()"| B["Rust Extension<br/><code>.dll/.so/.dylib</code>"]
+        B -->|"return values"| A
+    end
+    
+    subgraph emb["<b>Embedding</b> (Rust calls Ring)"]
+        direction LR
+        C["Rust Application<br/><code>binary</code>"] -->|"ring_state_new()<br/>ring_state_runfile()"| D["Ring VM<br/><code>embedded</code>"]
+        D -->|"results"| C
+    end
+```
+
+---
+
+## Using Extensions
+
+If you have a Rust extension (`.dll`/`.so`/`.dylib`), using it is simple:
+
+```ring
+# Load the library (OS-specific)
+if iswindows()
+    loadlib("myextension.dll")
+elseif ismacosx()
+    loadlib("libmyextension.dylib")
+else
+    loadlib("libmyextension.so")
+ok
+
+# Call functions just like native Ring functions
+? rust_hello()           # Hello from Rust!
+? rust_add(10, 20)       # 30
+? rust_greet("Ring")     # Hello, Ring!
+```
+
+That's it! No Rust knowledge required.
+
+---
+
+## Creating Extensions
+
+The rest of this document covers how to **create Ring extensions in Rust** or **embed Ring** in Rust applications.
+
+### Supported Platforms
 
 Linux, macOS, Windows, FreeBSD
 
-## Requirements
+### Requirements
 
 - Rust (stable)
 - [Ring language](https://ring-lang.github.io/) installed
 
-## Installation
+### Installation
 
 Add to your `Cargo.toml`:
 
@@ -38,7 +84,7 @@ cd ring-lang-rs
 cargo build --release
 ```
 
-## Environment Variables
+### Environment Variables
 
 Optional: Set `RING` (or `ring`) to your Ring installation directory:
 
@@ -55,17 +101,24 @@ set RING=C:\path\to\ring
 
 If not set, the system's libring will be used.
 
-## Quick Start
+### Quick Start
 
-See `examples/basic/` for a complete working example:
-
+**Extension example:**
 ```bash
 cd examples/basic
 cargo build --release
 ring test.ring
 ```
 
-## Usage
+**Embedding example:**
+```bash
+cd examples/embed
+cargo build --release
+./target/release/embed_ring        # Linux/macOS
+.\target\release\embed_ring.exe    # Windows
+```
+
+---
 
 ### Basic Function
 
@@ -189,7 +242,7 @@ ring_func!(ring_create_managed, |p| {
 });
 ```
 
-## Available Macros
+### Available Macros
 
 | Macro | Description |
 |-------|-------------|
@@ -216,7 +269,7 @@ ring_func!(ring_create_managed, |p| {
 | `ring_ret_managed_cpointer!` | Return managed C pointer |
 | `ring_error!` | Raise Ring error |
 
-## Module Structure
+### Module Structure
 
 | Module | Description |
 |--------|-------------|
@@ -224,20 +277,20 @@ ring_func!(ring_create_managed, |p| {
 | `api` | Ring VM API wrappers (58 functions) |
 | `list` | List manipulation (66 functions) |
 | `string` | String operations (15 functions) |
-| `state` | State management (29 functions) |
+| `state` | State management (31 functions) |
 | `vm` | VM control and execution (44 functions) |
 | `item` | Item/value operations (23 functions) |
 | `general` | File/directory utilities (14 functions) |
 | `macros` | Ergonomic helper macros |
 
-## API Coverage
+### API Coverage
 
-**186 / 456 functions (41%)** of Ring's public C API.
+**192 / 456 functions (42%)** of Ring's public C API.
 
 | Header | Coverage |
 |--------|----------|
 | `vm.h` | 29/29 (100%) |
-| `state.h` | 17/20 (85%) |
+| `state.h` | 19/20 (95%) |
 | `rstring.h` | 11/22 (50%) |
 | `ritem.h` | 17/34 (50%) |
 | `general.h` | 12/28 (43%) |
@@ -246,6 +299,76 @@ ring_func!(ring_create_managed, |p| {
 | `vmgc.h` | 4/81 (5%) |
 
 We focused on functions useful for writing extensions. `ringapi.h` has many type-check macros (bound separately). `rlist.h` and `vmgc.h` have `_gc` variants we skip.
+
+---
+
+## Embedding Ring
+
+To embed Ring in a Rust application:
+
+**Cargo.toml:**
+```toml
+[dependencies]
+ring-lang-rs = "0.1"
+```
+
+### Running Code
+
+```rust
+use ring_lang_rs::*;
+
+fn main() {
+    // Run code from string (VM must be initialized)
+    let state = ring_state_init();
+    ring_state_runcode_str(state, r#"? "Hello from Ring!""#);
+    ring_state_delete(state);
+
+    // Run code from file (compiles from scratch)
+    let state = ring_state_new();
+    ring_state_runfile_str(state, "script.ring");
+    ring_state_delete(state);
+}
+```
+
+### Sharing Variables
+
+```rust
+use ring_lang_rs::*;
+
+fn main() {
+    let state = ring_state_init();
+
+    // Rust -> Ring: Pass data via runcode
+    let value = 42.5;
+    ring_state_runcode_str(state, &format!("x = {}", value));
+
+    // Ring computes
+    ring_state_runcode_str(state, "result = x * 2");
+
+    // Ring -> Rust: Read variable back
+    let var = ring_state_findvar_str(state, "result");
+    if !var.is_null() {
+        let result = ring_list_getdouble(var, RING_VAR_VALUE);
+        println!("result = {}", result); // 85
+    }
+
+    ring_state_delete(state);
+}
+```
+
+### API Reference
+
+| Function | Requires | Description |
+|----------|----------|-------------|
+| `ring_state_init()` | - | Create state with initialized VM |
+| `ring_state_new()` | - | Create state for compilation |
+| `ring_state_runcode_str()` | `ring_state_init()` | Execute code on initialized VM |
+| `ring_state_runfile_str()` | `ring_state_new()` | Compile and run a file |
+| `ring_state_runstring_str()` | `ring_state_new()` | Compile and run a string |
+| `ring_state_findvar_str()` | `ring_state_init()` | Find a variable by name |
+| `ring_state_delete()` | - | Clean up and free the state |
+
+See `examples/embed/` for a complete working example.
 
 ## License
 
