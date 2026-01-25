@@ -2,11 +2,8 @@
 
 use std::mem::size_of;
 
-use crate::ffi::{FuncCall, Item, List, String as RingString, VM};
+use crate::ffi::{ByteCode, CFunction, FuncCall, Item, List, String as RingString, VM};
 
-/// Verify Rust struct sizes match C struct sizes exactly.
-/// These sizes were obtained by compiling and running a C program
-/// that prints sizeof() for each struct on Linux x86_64.
 #[test]
 fn test_struct_sizes() {
     assert_eq!(size_of::<VM>(), 217344, "VM struct size mismatch");
@@ -14,6 +11,8 @@ fn test_struct_sizes() {
     assert_eq!(size_of::<Item>(), 24, "Item struct size mismatch");
     assert_eq!(size_of::<RingString>(), 48, "String struct size mismatch");
     assert_eq!(size_of::<FuncCall>(), 104, "FuncCall struct size mismatch");
+    assert_eq!(size_of::<ByteCode>(), 24, "ByteCode struct size mismatch");
+    assert_eq!(size_of::<CFunction>(), 24, "CFunction struct size mismatch");
 }
 
 /// Verify stack size constant matches Ring's definition
