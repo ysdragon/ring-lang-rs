@@ -415,7 +415,7 @@ ring_func!(ring_dt_now_unix, |p| {
 
 
     let __result = now_unix();
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -426,7 +426,7 @@ ring_func!(ring_dt_now_unix_ms, |p| {
 
 
     let __result = now_unix_ms();
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -549,7 +549,7 @@ ring_func!(ring_dt_to_unix, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = to_unix(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -562,7 +562,7 @@ ring_func!(ring_dt_get_year, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_year(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -575,7 +575,7 @@ ring_func!(ring_dt_get_month, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_month(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -588,7 +588,7 @@ ring_func!(ring_dt_get_day, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_day(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -601,7 +601,7 @@ ring_func!(ring_dt_get_hour, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_hour(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -614,7 +614,7 @@ ring_func!(ring_dt_get_minute, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_minute(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -627,7 +627,7 @@ ring_func!(ring_dt_get_second, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_second(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -640,7 +640,7 @@ ring_func!(ring_dt_get_weekday, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_weekday(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -666,7 +666,7 @@ ring_func!(ring_dt_get_day_of_year, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_day_of_year(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -679,7 +679,7 @@ ring_func!(ring_dt_get_week_number, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_week_number(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -799,7 +799,7 @@ ring_func!(ring_dt_diff_days, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = diff_days(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -814,7 +814,7 @@ ring_func!(ring_dt_diff_hours, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = diff_hours(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -829,7 +829,7 @@ ring_func!(ring_dt_diff_minutes, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = diff_minutes(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -844,7 +844,7 @@ ring_func!(ring_dt_diff_seconds, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = diff_seconds(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -996,7 +996,7 @@ ring_func!(ring_dt_days_in_month, |p| {
     let __arg_2 = ring_get_number!(p, 2) as u32;
 
     let __result = days_in_month(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================

@@ -635,7 +635,7 @@ ring_func!(ring_json_get_number, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = get_number(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -650,7 +650,7 @@ ring_func!(ring_json_get_int, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = get_int(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -725,7 +725,7 @@ ring_func!(ring_json_array_len, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = array_len(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -772,7 +772,7 @@ ring_func!(ring_json_object_len, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = object_len(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================

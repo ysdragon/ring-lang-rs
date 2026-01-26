@@ -295,6 +295,8 @@ func GenerateMarkdown
         cMD += "| Function | Description |" + nl
         cMD += "|----------|-------------|" + nl
         
+        # Deduplicate functions by name
+        aSeenFuncs = []
         for aFunc in $aFunctions
             cSig = aFunc[1]
             cDesc = aFunc[2]
@@ -302,6 +304,17 @@ func GenerateMarkdown
             cName = aInfo[1]
             cParams = aInfo[2]
             cReturn = aInfo[3]
+            
+            # Skip if already seen
+            lSeen = false
+            for cSeenName in aSeenFuncs
+                if cSeenName = cName
+                    lSeen = true
+                    exit
+                ok
+            next
+            if lSeen loop ok
+            aSeenFuncs + cName
             
             cRingName = "`" + cPrefix + cName + "(" + FormatParams(cParams) + ")`"
             if cReturn != "" and cReturn != "()"
@@ -335,7 +348,8 @@ func GenerateMarkdown
             cMD += nl
             if cDesc != ""
                 # Replace "struct" with "class" in description for documentation
-                cDesc = substr(cDesc, " struct", " class")
+                cDesc = substr(cDesc, " structs ", " classes ")
+                cDesc = substr(cDesc, " struct ", " class ")
                 cDesc = substr(cDesc, "Struct ", "Class ")
                 cMD += cDesc + nl
                 cMD += nl
@@ -387,9 +401,12 @@ func GenerateMarkdown
             ok
             
             # Methods (excluding new, getters/setters already shown in properties)
+            # Separate instance methods from static methods
             aMethods = []
+            aStaticMethods = []
             for aMethod in aImplMethods
                 cMethodName = aMethod[1]
+                lIsStatic = aMethod[5]  # 5th element is static flag
                 # Skip constructor
                 if cMethodName = "new" loop ok
                 # Skip getters that match field names (already in properties)
@@ -406,7 +423,11 @@ func GenerateMarkdown
                     ok
                 next
                 if not lIsFieldGetter and not lIsFieldSetter
-                    aMethods + aMethod
+                    if lIsStatic
+                        aStaticMethods + aMethod
+                    else
+                        aMethods + aMethod
+                    ok
                 ok
             next
             
@@ -424,6 +445,33 @@ func GenerateMarkdown
                     
                     # Ring class style: obj.methodName(params)
                     cCall = "`obj." + cMethodName + "("
+                    if len(aParams) > 0
+                        cCall += FormatParams(aParams)
+                    ok
+                    cCall += ")`"
+                    if cReturn != "" and cReturn != "()" and cReturn != "Self"
+                        cCall += " → " + FormatType(cReturn)
+                    ok
+                    
+                    cMD += "| " + cCall + " | " + cMethodDesc + " |" + nl
+                next
+                cMD += nl
+            ok
+            
+            if len(aStaticMethods) > 0
+                cMD += "**Static Methods**" + nl
+                cMD += nl
+                cMD += "| Method | Description |" + nl
+                cMD += "|--------|-------------|" + nl
+                
+                for aMethod in aStaticMethods
+                    cMethodName = aMethod[1]
+                    aParams = aMethod[2]
+                    cReturn = aMethod[3]
+                    cMethodDesc = aMethod[4]
+                    
+                    # Static style: prefix_structname_method(params)
+                    cCall = "`" + cPrefix + cLower + "_" + cMethodName + "("
                     if len(aParams) > 0
                         cCall += FormatParams(aParams)
                     ok
@@ -579,16 +627,19 @@ func GetImplMethods cStructName
                 aParams = aInfo[2]
                 cReturn = aInfo[3]
                 
-                # Filter out &self, &mut self from params
+                # Check if static (no &self or &mut self)
+                lIsStatic = true
                 aFilteredParams = []
                 for aParam in aParams
                     cParamName = aParam[1]
-                    if cParamName != "&self" and cParamName != "&mut self" and cParamName != "self"
+                    if cParamName = "&self" or cParamName = "&mut self" or cParamName = "self"
+                        lIsStatic = false
+                    else
                         aFilteredParams + aParam
                     ok
                 next
                 
-                aMethods + [cMethodName, aFilteredParams, cReturn, cLastDocComment]
+                aMethods + [cMethodName, aFilteredParams, cReturn, cLastDocComment, lIsStatic]
                 cLastDocComment = ""
             ok
         next

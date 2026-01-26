@@ -294,7 +294,7 @@ ring_func!(ring_uuid_get_version, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = get_version(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -428,7 +428,7 @@ ring_func!(ring_uuid_compare, |p| {
     let __arg_2 = ring_get_string!(p, 2);
 
     let __result = compare(__arg_1, __arg_2);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================
@@ -493,7 +493,7 @@ ring_func!(ring_uuid_v7_timestamp_ms, |p| {
     let __arg_1 = ring_get_string!(p, 1);
 
     let __result = v7_timestamp_ms(__arg_1);
-    ring_ret_number!(p, __result);
+    ring_ret_number!(p, __result as f64);
 });
 
 // ============================================

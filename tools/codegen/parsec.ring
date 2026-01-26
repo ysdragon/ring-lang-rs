@@ -61,12 +61,14 @@ C_TYPE_LIST      = 5
 C_TYPE_RESULT    = 6
 C_TYPE_OPTION    = 7
 C_TYPE_BOOL      = 8
-C_TYPE_UNKNOWN   = 9
+C_TYPE_STRUCT    = 9
+C_TYPE_UNKNOWN   = 10
 
 # Tabs
 C_TABS_1 = "    "
 C_TABS_2 = "        "
 C_TABS_3 = "            "
+C_TABS_4 = "                "
 
 # ==============================================================================
 # Global Variables
@@ -466,38 +468,36 @@ Func GetRustTypeCategory cType
         return C_TYPE_VOID
     ok
     
+    # Result<T, E>
+    if left(cType, 7) = "Result<"
+        return C_TYPE_RESULT
+    ok
+    
+    # Option<T>
+    if left(cType, 7) = "Option<"
+        return C_TYPE_OPTION
+    ok
+    
+    # Vec<T> and slices
+    if left(cType, 4) = "Vec<" or left(cType, 2) = "&[" or left(cType, 1) = "["
+        return C_TYPE_LIST
+    ok
+    
     # Bool
     if cType = "bool"
         return C_TYPE_BOOL
     ok
     
-    # Numbers
+    # Numbers (exact match only)
     for cNumType in $aNumberTypes
         if cType = cNumType
             return C_TYPE_NUMBER
         ok
     next
     
-    # Strings
-    for cStrType in $aStringTypes
-        if cType = cStrType or substr(cType, "String") or cType = "&str"
-            return C_TYPE_STRING
-        ok
-    next
-    
-    # Lists/Vectors
-    if left(cType, 4) = "Vec<" or left(cType, 2) = "&["
-        return C_TYPE_LIST
-    ok
-    
-    # Result
-    if left(cType, 7) = "Result<"
-        return C_TYPE_RESULT
-    ok
-    
-    # Option
-    if left(cType, 7) = "Option<"
-        return C_TYPE_OPTION
+    # Strings (exact match only, no substring)
+    if cType = "String" or cType = "&str" or cType = "&String" or cType = "str"
+        return C_TYPE_STRING
     ok
     
     # Pointers
@@ -506,8 +506,13 @@ Func GetRustTypeCategory cType
         return C_TYPE_POINTER
     ok
     
-    # Default to pointer for complex types (structs, etc.)
-    return C_TYPE_POINTER
+    # Struct types (starts with uppercase letter, not a pointer)
+    if IsStructType(cType)
+        return C_TYPE_STRUCT
+    ok
+    
+    # Default to unknown
+    return C_TYPE_UNKNOWN
 
 Func GetInnerType cType
     # Extract inner type from Option<T>, Result<T, E>, Vec<T>, etc.
@@ -698,12 +703,12 @@ Func GenerateFunctionWrapper aFunc
         cCode += C_TABS_1 + "let __result = " + cFuncName + "("
     ok
     
-    # Add arguments
+    # Add arguments (using FormatMethodArgument to handle &Struct params)
     for i = 1 to nParamCount
         if i > 1
             cCode += ", "
         ok
-        cCode += "__arg_" + i
+        cCode += FormatMethodArgument(aParams[i][2], i)
     next
     
     cCode += ")"
@@ -717,7 +722,7 @@ Func GenerateFunctionWrapper aFunc
         cInnerType = GetInnerType(cReturnType)
         nInnerCategory = GetRustTypeCategory(cInnerType)
         cCode += C_TABS_2 + "Ok(__result) => "
-        cCode += GenerateReturnStatement(nInnerCategory, cInnerType, "__result")
+        cCode += GenerateReturnStatementEx(nInnerCategory, cInnerType, "__result", true)
         cCode += C_TABS_2 + 'Err(e) => ring_error!(p, &format!("{:?}", e)),' + nl
         cCode += C_TABS_1 + "}" + nl
     on C_TYPE_OPTION
@@ -725,7 +730,7 @@ Func GenerateFunctionWrapper aFunc
         cInnerType = GetInnerType(cReturnType)
         nInnerCategory = GetRustTypeCategory(cInnerType)
         cCode += C_TABS_2 + "Some(__result) => "
-        cCode += GenerateReturnStatement(nInnerCategory, cInnerType, "__result")
+        cCode += GenerateReturnStatementEx(nInnerCategory, cInnerType, "__result", true)
         cCode += C_TABS_2 + "None => ring_ret_string!(p, " + '"" ' + ")," + nl
         cCode += C_TABS_1 + "}" + nl
     other
@@ -750,6 +755,8 @@ Func GenerateParamCheck cType, nIndex
     on C_TYPE_LIST
         return C_TABS_1 + "ring_check_list!(p, " + nIndex + ");" + nl
     on C_TYPE_POINTER
+        return C_TABS_1 + "ring_check_cpointer!(p, " + nIndex + ");" + nl
+    on C_TYPE_STRUCT
         return C_TABS_1 + "ring_check_cpointer!(p, " + nIndex + ");" + nl
     other
         return C_TABS_1 + "ring_check_cpointer!(p, " + nIndex + ");" + nl
@@ -778,28 +785,81 @@ Func GenerateParamGet cName, cType, nIndex
         cInnerType = GetPointerInnerType(cType)
         cTypeConst = upper(cInnerType) + "_TYPE"
         return C_TABS_1 + "let " + cArgName + " = ring_get_cpointer!(p, " + nIndex + ", " + cTypeConst + ");" + nl
+    on C_TYPE_STRUCT
+        # Struct parameter - get pointer and dereference+clone to get owned value
+        cTypeConst = upper(cType) + "_TYPE"
+        cCode = C_TABS_1 + "let __ptr_" + nIndex + " = ring_get_cpointer!(p, " + nIndex + ", " + cTypeConst + ");" + nl
+        cCode += C_TABS_1 + "let " + cArgName + " = unsafe { (*(__ptr_" + nIndex + " as *const " + cType + ")).clone() };" + nl
+        return cCode
     other
         cTypeConst = upper(cType) + "_TYPE"
         return C_TABS_1 + "let " + cArgName + " = ring_get_cpointer!(p, " + nIndex + ", " + cTypeConst + ");" + nl
     off
 
 Func GenerateReturnStatement nCategory, cType, cVarName
+    return GenerateReturnStatementEx(nCategory, cType, cVarName, false)
+
+Func GenerateReturnStatementEx nCategory, cType, cVarName, lInMatchArm
+    # lInMatchArm: true = use comma, false = use semicolon
+    cEnd = ";"
+    if lInMatchArm
+        cEnd = ","
+    ok
+    
     switch nCategory
     on C_TYPE_VOID
         return ""
     on C_TYPE_NUMBER
-        return C_TABS_1 + "ring_ret_number!(p, " + cVarName + ");" + nl
+        return C_TABS_1 + "ring_ret_number!(p, " + cVarName + " as f64)" + cEnd + nl
     on C_TYPE_BOOL
-        return C_TABS_1 + "ring_ret_number!(p, if " + cVarName + " { 1.0 } else { 0.0 });" + nl
+        return C_TABS_1 + "ring_ret_number!(p, if " + cVarName + " { 1.0 } else { 0.0 })" + cEnd + nl
     on C_TYPE_STRING
-        return C_TABS_1 + "ring_ret_string!(p, &" + cVarName + ");" + nl
+        return C_TABS_1 + "ring_ret_string!(p, &" + cVarName + ")" + cEnd + nl
     on C_TYPE_LIST
-        return C_TABS_1 + "ring_ret_list!(p, " + cVarName + ");" + nl
+        # Vec<T> needs conversion to Ring list
+        cInnerType = GetInnerType(cType)
+        nInnerCategory = GetRustTypeCategory(cInnerType)
+        cCode = ""
+        if lInMatchArm
+            cCode += "{" + nl
+        ok
+        cCode += C_TABS_1 + "let __list = ring_new_list!(p);" + nl
+        cCode += C_TABS_1 + "for __item in " + cVarName + " {" + nl
+        switch nInnerCategory
+        on C_TYPE_NUMBER
+            cCode += C_TABS_2 + "ring_list_adddouble(__list, __item as f64);" + nl
+        on C_TYPE_BOOL
+            cCode += C_TABS_2 + "ring_list_addint(__list, if __item { 1 } else { 0 });" + nl
+        on C_TYPE_STRING
+            cCode += C_TABS_2 + "ring_list_addstring(__list, format!(" + '"' + "{}\0" + '"' + ", __item).as_bytes());" + nl
+        other
+            # Complex inner type (likely a struct) - add as pointer
+            if IsStructType(cInnerType)
+                cInnerTypeConst = upper(cInnerType) + "_TYPE"
+                cCode += C_TABS_2 + "let __ptr = Box::into_raw(Box::new(__item));" + nl
+                cCode += C_TABS_2 + "ring_list_addcpointer(__list, __ptr as *mut std::ffi::c_void, " + cInnerTypeConst + ");" + nl
+            else
+                # Fallback for unknown types - use debug format
+                cCode += C_TABS_2 + "// Unknown inner type: " + cInnerType + nl
+                cCode += C_TABS_2 + "ring_list_addstring(__list, format!(" + '"' + "{:?}\0" + '"' + ", __item).as_bytes());" + nl
+            ok
+        off
+        cCode += C_TABS_1 + "}" + nl
+        cCode += C_TABS_1 + "ring_ret_list!(p, __list)" + cEnd + nl
+        if lInMatchArm
+            cCode += C_TABS_1 + "}" + nl
+        ok
+        return cCode
     on C_TYPE_POINTER
         cInnerType = GetPointerInnerType(cType)
         cTypeConst = upper(cInnerType) + "_TYPE"
         return C_TABS_1 + "ring_ret_cpointer!(p, " + cVarName + ", " + cTypeConst + ");" + nl
+    on C_TYPE_STRUCT
+        # Owned struct - box it and return as pointer
+        cTypeConst = upper(cType) + "_TYPE"
+        return C_TABS_1 + "ring_ret_cpointer!(p, Box::into_raw(Box::new(" + cVarName + ")), " + cTypeConst + ");" + nl
     other
+        # Unknown type - try to box it
         cTypeConst = upper(cType) + "_TYPE"
         return C_TABS_1 + "ring_ret_cpointer!(p, Box::into_raw(Box::new(" + cVarName + ")), " + cTypeConst + ");" + nl
     off
@@ -920,8 +980,61 @@ Func GenerateStructWrappers aStruct, aImplMethods
                 cCode += C_TABS_2 + "ring_ret_number!(p, if obj." + cFieldName + " { 1.0 } else { 0.0 });" + nl
             on C_TYPE_STRING
                 cCode += C_TABS_2 + "ring_ret_string!(p, &obj." + cFieldName + ");" + nl
+            on C_TYPE_LIST
+                # Vec<T> field - return as Ring list
+                cInnerType = GetInnerType(cFieldType)
+                nInnerCategory = GetRustTypeCategory(cInnerType)
+                cCode += C_TABS_2 + "let __list = ring_new_list!(p);" + nl
+                cCode += C_TABS_2 + "for __item in &obj." + cFieldName + " {" + nl
+                switch nInnerCategory
+                on C_TYPE_NUMBER
+                    cCode += C_TABS_3 + "ring_list_adddouble(__list, *__item as f64);" + nl
+                on C_TYPE_BOOL
+                    cCode += C_TABS_3 + "ring_list_addint(__list, if *__item { 1 } else { 0 });" + nl
+                on C_TYPE_STRING
+                    cCode += C_TABS_3 + "ring_list_addstring(__list, format!(" + '"' + "{}\0" + '"' + ", __item).as_bytes());" + nl
+                other
+                    if IsStructType(cInnerType)
+                        cInnerTypeConst = upper(cInnerType) + "_TYPE"
+                        cCode += C_TABS_3 + "let __ptr = Box::into_raw(Box::new(__item.clone()));" + nl
+                        cCode += C_TABS_3 + "ring_list_addcpointer(__list, __ptr as *mut std::ffi::c_void, " + cInnerTypeConst + ");" + nl
+                    else
+                        cCode += C_TABS_3 + "ring_list_addstring(__list, format!(" + '"' + "{:?}\0" + '"' + ", __item).as_bytes());" + nl
+                    ok
+                off
+                cCode += C_TABS_2 + "}" + nl
+                cCode += C_TABS_2 + "ring_ret_list!(p, __list);" + nl
+            on C_TYPE_OPTION
+                # Option<T> field - return inner value or null
+                cInnerType = GetInnerType(cFieldType)
+                nInnerCategory = GetRustTypeCategory(cInnerType)
+                cCode += C_TABS_2 + "match &obj." + cFieldName + " {" + nl
+                cCode += C_TABS_3 + "Some(__val) => {" + nl
+                switch nInnerCategory
+                on C_TYPE_NUMBER
+                    cCode += C_TABS_4 + "ring_ret_number!(p, *__val as f64);" + nl
+                on C_TYPE_BOOL
+                    cCode += C_TABS_4 + "ring_ret_number!(p, if *__val { 1.0 } else { 0.0 });" + nl
+                on C_TYPE_STRING
+                    cCode += C_TABS_4 + "ring_ret_string!(p, __val);" + nl
+                other
+                    if IsStructType(cInnerType)
+                        cInnerTypeConst = upper(cInnerType) + "_TYPE"
+                        cCode += C_TABS_4 + "ring_ret_cpointer!(p, Box::into_raw(Box::new(__val.clone())), " + cInnerTypeConst + ");" + nl
+                    else
+                        cCode += C_TABS_4 + "ring_ret_string!(p, &format!(" + '"' + "{:?}" + '"' + ", __val));" + nl
+                    ok
+                off
+                cCode += C_TABS_3 + "}" + nl
+                cCode += C_TABS_3 + 'None => ring_ret_string!(p, ""),' + nl
+                cCode += C_TABS_2 + "}" + nl
+            on C_TYPE_STRUCT
+                # Struct field - return clone as pointer
+                cFieldTypeConst = upper(cFieldType) + "_TYPE"
+                cCode += C_TABS_2 + "ring_ret_cpointer!(p, Box::into_raw(Box::new(obj." + cFieldName + ".clone())), " + cFieldTypeConst + ");" + nl
             other
-                cCode += C_TABS_2 + "// TODO: Handle complex type " + cFieldType + nl
+                # Unknown type - return 0
+                cCode += C_TABS_2 + "// Unknown field type: " + cFieldType + nl
                 cCode += C_TABS_2 + "ring_ret_number!(p, 0.0);" + nl
             off
             
@@ -946,6 +1059,13 @@ Func GenerateStructWrappers aStruct, aImplMethods
                 cCode += C_TABS_1 + "ring_check_number!(p, 2);" + nl
             on C_TYPE_STRING
                 cCode += C_TABS_1 + "ring_check_string!(p, 2);" + nl
+            on C_TYPE_LIST
+                cCode += C_TABS_1 + "ring_check_list!(p, 2);" + nl
+            on C_TYPE_OPTION
+                # Option can be pointer (Some) or empty string (None)
+                cCode += C_TABS_1 + "// Option field - accepts pointer or empty string for None" + nl
+            on C_TYPE_STRUCT
+                cCode += C_TABS_1 + "ring_check_cpointer!(p, 2);" + nl
             other
                 cCode += C_TABS_1 + "ring_check_cpointer!(p, 2);" + nl
             off
@@ -960,8 +1080,70 @@ Func GenerateStructWrappers aStruct, aImplMethods
             on C_TYPE_STRING
                 # ring_get_string! returns &str, need to convert to String for owned field
                 cCode += C_TABS_2 + "obj." + cFieldName + " = ring_get_string!(p, 2).to_string();" + nl
+            on C_TYPE_LIST
+                # Vec<T> field - convert from Ring list
+                cInnerType = GetInnerType(cFieldType)
+                nInnerCategory = GetRustTypeCategory(cInnerType)
+                cCode += C_TABS_2 + "let __list = ring_get_list!(p, 2);" + nl
+                cCode += C_TABS_2 + "let __size = ring_list_getsize(__list);" + nl
+                cCode += C_TABS_2 + "let mut __vec = Vec::new();" + nl
+                cCode += C_TABS_2 + "for __i in 1..=__size {" + nl
+                switch nInnerCategory
+                on C_TYPE_NUMBER
+                    cCode += C_TABS_3 + "__vec.push(ring_list_getdouble(__list, __i) as " + cInnerType + ");" + nl
+                on C_TYPE_BOOL
+                    cCode += C_TABS_3 + "__vec.push(ring_list_getint(__list, __i) != 0);" + nl
+                on C_TYPE_STRING
+                    cCode += C_TABS_3 + "__vec.push(ring_list_getstring(__list, __i).to_string());" + nl
+                other
+                    if IsStructType(cInnerType)
+                        cInnerTypeConst = upper(cInnerType) + "_TYPE"
+                        cCode += C_TABS_3 + "let __ptr = ring_list_getcpointer(__list, __i, " + cInnerTypeConst + ");" + nl
+                        cCode += C_TABS_3 + "if !__ptr.is_null() {" + nl
+                        cCode += C_TABS_4 + "__vec.push(unsafe { (*(__ptr as *const " + cInnerType + ")).clone() });" + nl
+                        cCode += C_TABS_3 + "}" + nl
+                    else
+                        cCode += C_TABS_3 + "// Cannot convert unknown type from list" + nl
+                    ok
+                off
+                cCode += C_TABS_2 + "}" + nl
+                cCode += C_TABS_2 + "obj." + cFieldName + " = __vec;" + nl
+            on C_TYPE_OPTION
+                # Option<T> field - accept pointer for Some, check for None
+                cInnerType = GetInnerType(cFieldType)
+                nInnerCategory = GetRustTypeCategory(cInnerType)
+                cCode += C_TABS_2 + "if ring_vm_api_isstring(p, 2) != 0 && ring_get_string!(p, 2).is_empty() {" + nl
+                cCode += C_TABS_3 + "obj." + cFieldName + " = None;" + nl
+                cCode += C_TABS_2 + "} else {" + nl
+                switch nInnerCategory
+                on C_TYPE_NUMBER
+                    cCode += C_TABS_3 + "obj." + cFieldName + " = Some(ring_get_number!(p, 2) as " + cInnerType + ");" + nl
+                on C_TYPE_BOOL
+                    cCode += C_TABS_3 + "obj." + cFieldName + " = Some(ring_get_number!(p, 2) != 0.0);" + nl
+                on C_TYPE_STRING
+                    cCode += C_TABS_3 + "obj." + cFieldName + " = Some(ring_get_string!(p, 2).to_string());" + nl
+                other
+                    if IsStructType(cInnerType)
+                        cInnerTypeConst = upper(cInnerType) + "_TYPE"
+                        cCode += C_TABS_3 + "if let Some(val) = ring_get_pointer!(p, 2, " + cInnerType + ", " + cInnerTypeConst + ") {" + nl
+                        cCode += C_TABS_4 + "obj." + cFieldName + " = Some(val.clone());" + nl
+                        cCode += C_TABS_3 + "}" + nl
+                    else
+                        cCode += C_TABS_3 + "// Cannot set unknown Option inner type" + nl
+                    ok
+                off
+                cCode += C_TABS_2 + "}" + nl
+            on C_TYPE_STRUCT
+                # Struct field - get from pointer and clone
+                cFieldTypeConst = upper(cFieldType) + "_TYPE"
+                cCode += C_TABS_2 + "if let Some(val) = ring_get_pointer!(p, 2, " + cFieldType + ", " + cFieldTypeConst + ") {" + nl
+                cCode += C_TABS_3 + "obj." + cFieldName + " = val.clone();" + nl
+                cCode += C_TABS_2 + "} else {" + nl
+                cCode += C_TABS_3 + 'ring_error!(p, "Invalid ' + cFieldType + ' pointer");' + nl
+                cCode += C_TABS_2 + "}" + nl
             other
-                cCode += C_TABS_2 + "// TODO: Handle complex type " + cFieldType + nl
+                # Unknown type - no-op
+                cCode += C_TABS_2 + "// Unknown field type: " + cFieldType + " - cannot set" + nl
             off
             
             cCode += C_TABS_1 + "} else {" + nl
@@ -997,6 +1179,11 @@ Func GenerateImplWrappers aImpl
         aParams = aMethod[2]
         cReturnType = aMethod[3]
         lStatic = aMethod[4]
+        
+        # Resolve Self to actual struct name
+        if cReturnType = "Self"
+            cReturnType = cStructName
+        ok
         
         nParamCount = len(aParams)
         if not lStatic
@@ -1063,7 +1250,8 @@ Func GenerateImplWrappers aImpl
             if i > 1
                 cCode += ", "
             ok
-            cCode += "__arg_" + (i + nOffset)
+            cParamType = aParams[i][2]
+            cCode += FormatMethodArgument(cParamType, i + nOffset)
         next
         
         cCode += ");" + nl
@@ -1267,7 +1455,8 @@ Func GenerateRingClass aStruct, cPrefix, aData
         aParams = aCustomCtor[2]
         cCode += C_TABS_1 + "Func init"
         for i = 1 to len(aParams)
-            cCode += " " + aParams[i][1]
+            cSafeParamName = RingSafeMethodName(aParams[i][1])
+            cCode += " " + cSafeParamName
             if i < len(aParams)
                 cCode += ","
             ok
@@ -1278,7 +1467,15 @@ Func GenerateRingClass aStruct, cPrefix, aData
             if i > 1
                 cCode += ", "
             ok
-            cCode += aParams[i][1]
+            cSafeParamName = RingSafeMethodName(aParams[i][1])
+            # Check if parameter is a struct type that needs unwrapping
+            cParamType = aParams[i][2]
+            nParamCategory = GetRustTypeCategory(cParamType)
+            if nParamCategory = C_TYPE_POINTER or nParamCategory = C_TYPE_STRUCT or nParamCategory = C_TYPE_UNKNOWN
+                cCode += "GetObjectPointerFromRingObject(" + cSafeParamName + ")"
+            else
+                cCode += cSafeParamName
+            ok
         next
         cCode += ")" + nl
     else
@@ -1304,6 +1501,9 @@ Func GenerateRingClass aStruct, cPrefix, aData
         cFieldName = aField[1]
         cSafeFieldName = RingSafeMethodName(cFieldName)
         
+        cFieldType = aField[2]
+        nFieldCategory = GetRustTypeCategory(cFieldType)
+        
         # Getter
         cCode += C_TABS_1 + "Func " + cSafeFieldName + nl
         cCode += C_TABS_2 + "return " + cPrefix + cLowerName + "_get_" + cFieldName + "(pObject)" + nl
@@ -1311,7 +1511,11 @@ Func GenerateRingClass aStruct, cPrefix, aData
         
         # Setter
         cCode += C_TABS_1 + "Func set" + Upper(Left(cFieldName, 1)) + Right(cFieldName, len(cFieldName) - 1) + " value" + nl
-        cCode += C_TABS_2 + cPrefix + cLowerName + "_set_" + cFieldName + "(pObject, value)" + nl
+        if nFieldCategory = C_TYPE_POINTER or nFieldCategory = C_TYPE_STRUCT or nFieldCategory = C_TYPE_UNKNOWN
+            cCode += C_TABS_2 + cPrefix + cLowerName + "_set_" + cFieldName + "(pObject, GetObjectPointerFromRingObject(value))" + nl
+        else
+            cCode += C_TABS_2 + cPrefix + cLowerName + "_set_" + cFieldName + "(pObject, value)" + nl
+        ok
         cCode += nl
     next
     
@@ -1351,7 +1555,7 @@ Func GenerateRingClass aStruct, cPrefix, aData
                             cParamType = aParamTypes[i][2]
                         ok
                         nParamCategory = GetRustTypeCategory(cParamType)
-                        if nParamCategory = C_TYPE_POINTER or nParamCategory = C_TYPE_UNKNOWN
+                        if nParamCategory = C_TYPE_POINTER or nParamCategory = C_TYPE_STRUCT or nParamCategory = C_TYPE_UNKNOWN
                             cCode += ", GetObjectPointerFromRingObject(P" + i + ")"
                         else
                             cCode += ", P" + i
@@ -1400,6 +1604,87 @@ Func RingSafeMethodName cName
 # ==============================================================================
 # Utility Functions
 # ==============================================================================
+
+Func FormatMethodArgument cType, nIndex
+    # Format argument for method call, handling reference types
+    cArgName = "__arg_" + nIndex
+    cType = trim(cType)
+    
+    # Skip if it's a string type (various forms)
+    if IsStringRefType(cType)
+        return cArgName
+    ok
+    
+    # Skip slices (&[T], &mut [T])
+    if substr(cType, "[") > 0
+        return cArgName
+    ok
+    
+    # Check if it's a reference to a struct (e.g., &Point, &mut Point)
+    if left(cType, 5) = "&mut "
+        cInnerType = trim(substr(cType, 6))
+        if IsStructType(cInnerType)
+            return "unsafe { &mut *(" + cArgName + " as *mut " + cInnerType + ") }"
+        ok
+    elseif left(cType, 1) = "&"
+        cInnerType = trim(substr(cType, 2))
+        if IsStructType(cInnerType)
+            return "unsafe { &*(" + cArgName + " as *const " + cInnerType + ") }"
+        ok
+    ok
+    
+    return cArgName
+
+Func IsStringRefType cType
+    # Check if type is any form of string reference
+    cType = trim(cType)
+    if cType = "&str" return true ok
+    if cType = "&mut str" return true ok
+    if substr(cType, "str") > 0 and left(cType, 1) = "&"
+        return true
+    ok
+    if substr(cType, "String") > 0
+        return true
+    ok
+    return false
+
+Func IsStructType cType
+    # Check if type is likely a struct (not a primitive, string, or slice)
+    cType = trim(cType)
+    
+    # Not a struct if it's a primitive number
+    for cNumType in $aNumberTypes
+        if cType = cNumType
+            return false
+        ok
+    next
+    
+    # Not a struct if it's a string type
+    if cType = "str" or cType = "String"
+        return false
+    ok
+    
+    # Not a struct if it's bool
+    if cType = "bool"
+        return false
+    ok
+    
+    # Not a struct if it starts with [ (slice inner)
+    if left(cType, 1) = "["
+        return false
+    ok
+    
+    # Not a struct if it contains lifetime (e.g., 'static, 'a)
+    if substr(cType, "'") > 0
+        return false
+    ok
+    
+    # Looks like a struct name (starts with uppercase A-Z)
+    if isupper(left(cType, 1))
+        return true
+    ok
+    
+    return false
 
 Func GetCustomConstructor cStructName
     # Returns custom constructor for struct if exists, empty list otherwise
