@@ -1,6 +1,16 @@
+<div align="center">
+
 # ring-lang-rs
 
 Rust bindings for the [Ring programming language](https://ring-lang.github.io/).
+
+<a href="https://crates.io/crates/ring-lang-rs"><img src="https://img.shields.io/crates/v/ring-lang-rs.svg" alt="Crates.io"></a>
+<a href="https://docs.rs/ring-lang-rs"><img src="https://docs.rs/ring-lang-rs/badge.svg" alt="Documentation"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+
+</div>
+
+
 
 ## Use Cases
 

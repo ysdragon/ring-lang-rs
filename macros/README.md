@@ -1,6 +1,15 @@
+<div align="center">
+
 # ring-lang-codegen
 
 Proc macros to generate Ring extensions using Rust - zero configuration needed.
+
+<a href="https://crates.io/crates/ring-lang-codegen"><img src="https://img.shields.io/crates/v/ring-lang-codegen.svg" alt="Crates.io"></a>
+<a href="https://docs.rs/ring-lang-codegen"><img src="https://docs.rs/ring-lang-codegen/badge.svg" alt="Documentation"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+
+</div>
+
 
 ## Usage
 
