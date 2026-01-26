@@ -1,6 +1,6 @@
 [package]
 name = "ring-lang-rs"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 description = "Rust bindings for the Ring programming language"
 license = "MIT"
