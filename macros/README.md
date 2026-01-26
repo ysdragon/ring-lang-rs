@@ -131,6 +131,48 @@ hash_hasher_delete(h)
 | `examples/datetime-demo/` | chrono | Date/time operations, parsing, formatting |
 | `examples/regex-demo/` | regex | Pattern matching, replacement, extraction |
 
+## Supported Types
+
+### Return Types
+
+| Type | Ring Representation |
+|------|---------------------|
+| `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` | Number |
+| `bool` | Number (1 or 0) |
+| `String`, `&str` | String |
+| `Vec<T>` | List |
+| `Vec<Vec<T>>` | Nested list (2D array) |
+| `Option<T>` | Value or empty string for None |
+| `Result<T, E>` | Value on Ok, Ring error on Err |
+| `(A, B)`, `(A, B, C)` | List (tuple as list) |
+| `Box<T>` | Unwrapped inner value |
+| `HashMap<K, V>` | List of `[key, value]` pairs |
+| Custom structs | C pointer |
+
+### Parameter Types
+
+| Type | Ring Input |
+|------|------------|
+| `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` | Number |
+| `bool` | Number (non-zero = true) |
+| `&str`, `String` | String |
+| `&T` (struct reference) | C pointer |
+| `&mut T` (mutable struct reference) | C pointer |
+| `Vec<T>` | List |
+| `&[T]` (slice) | List |
+| `Option<T>` | Value or empty string for None |
+| Custom structs | C pointer |
+
+### Field Types (Getters/Setters)
+
+| Type | Get Returns | Set Accepts |
+|------|-------------|-------------|
+| Primitives | Number | Number |
+| `String` | String | String |
+| `Vec<T>` | List | List |
+| `Option<T>` | Value or empty string | Value or empty string |
+| Struct | C pointer | C pointer |
+
 ## Comparison
 
 | Feature | parsec.ring | ring_extension! |
