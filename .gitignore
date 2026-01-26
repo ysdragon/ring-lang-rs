@@ -1,5 +1,5 @@
-/target
+target/
 Cargo.lock
 src/ffi_generated.rs
-tools/
 BINDGEN.md
+bindgen/
