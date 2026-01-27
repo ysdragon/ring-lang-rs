@@ -14,7 +14,7 @@ rust-version = "1.85"
 
 [lib]
 name = "ring_lang_rs"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [dependencies]
 libc = "0.2"
@@ -24,3 +24,5 @@ cc = "1.2"
 
 [features]
 default = []
+static = []
+no-link = []
