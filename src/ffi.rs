@@ -1,4 +1,4 @@
-use libc::{c_char, c_double, c_int, c_uint, c_void};
+use crate::ctypes::{c_char, c_double, c_int, c_uint, c_void, size_t};
 
 use crate::{RingFunc, RingState};
 
@@ -445,17 +445,13 @@ unsafe extern "C" {
     pub fn ring_state_runfile(pRingState: RingState, cFileName: *const c_char) -> c_int;
     pub fn ring_state_runstring(pRingState: RingState, cString: *const c_char) -> c_int;
 
-    pub fn ring_state_malloc(pRingState: RingState, nSize: libc::size_t) -> *mut c_void;
-    pub fn ring_state_calloc(
-        pRingState: RingState,
-        nCount: libc::size_t,
-        nSize: libc::size_t,
-    ) -> *mut c_void;
+    pub fn ring_state_malloc(pRingState: RingState, nSize: size_t) -> *mut c_void;
+    pub fn ring_state_calloc(pRingState: RingState, nCount: size_t, nSize: size_t) -> *mut c_void;
     pub fn ring_state_realloc(
         pRingState: RingState,
         pPtr: *mut c_void,
-        nOldSize: libc::size_t,
-        nNewSize: libc::size_t,
+        nOldSize: size_t,
+        nNewSize: size_t,
     ) -> *mut c_void;
     pub fn ring_state_free(pRingState: RingState, pPtr: *mut c_void);
 

@@ -29,6 +29,7 @@
 #![allow(clippy::manual_c_str_literals)]
 
 pub mod api;
+mod ctypes;
 pub mod ffi;
 pub mod general;
 pub mod item;
@@ -49,28 +50,28 @@ pub use state::*;
 pub use string::*;
 pub use vm::*;
 
-use std::ffi::c_void;
+use ctypes::c_void;
 
 pub type RingState = *mut c_void;
 pub type RingVM = *mut ffi::VM;
 pub type RingList = *mut ffi::List;
 pub type RingFunc = extern "C" fn(*mut c_void);
 
-pub const RING_CPOINTER_STATUS: libc::c_uint = 3;
-pub const RING_CPOINTERSTATUS_NOTASSIGNED: libc::c_int = 2;
+pub const RING_CPOINTER_STATUS: ctypes::c_uint = 3;
+pub const RING_CPOINTERSTATUS_NOTASSIGNED: ctypes::c_int = 2;
 
-pub const RING_OUTPUT_RETLIST: libc::c_int = 0;
-pub const RING_OUTPUT_RETLISTBYREF: libc::c_int = 1;
-pub const RING_OUTPUT_RETNEWREF: libc::c_int = 2;
+pub const RING_OUTPUT_RETLIST: ctypes::c_int = 0;
+pub const RING_OUTPUT_RETLISTBYREF: ctypes::c_int = 1;
+pub const RING_OUTPUT_RETNEWREF: ctypes::c_int = 2;
 
-pub const RING_VARVALUE_INT: libc::c_int = 1;
-pub const RING_VARVALUE_FLOAT: libc::c_int = 2;
+pub const RING_VARVALUE_INT: ctypes::c_int = 1;
+pub const RING_VARVALUE_FLOAT: ctypes::c_int = 2;
 
-pub const RING_VAR_NAME: libc::c_uint = 1;
-pub const RING_VAR_TYPE: libc::c_uint = 2;
-pub const RING_VAR_VALUE: libc::c_uint = 3;
-pub const RING_VAR_PVALUETYPE: libc::c_uint = 4;
-pub const RING_VAR_PRIVATEFLAG: libc::c_uint = 5;
+pub const RING_VAR_NAME: ctypes::c_uint = 1;
+pub const RING_VAR_TYPE: ctypes::c_uint = 2;
+pub const RING_VAR_VALUE: ctypes::c_uint = 3;
+pub const RING_VAR_PVALUETYPE: ctypes::c_uint = 4;
+pub const RING_VAR_PRIVATEFLAG: ctypes::c_uint = 5;
 
 pub const RING_API_MISS1PARA: &[u8] = b"Bad parameters count, the function expect one parameter\0";
 pub const RING_API_MISS2PARA: &[u8] = b"Bad parameters count, the function expect two parameters\0";

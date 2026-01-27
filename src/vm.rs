@@ -1,4 +1,4 @@
-use libc::{c_char, c_int, c_uint, c_void};
+use crate::ctypes::{c_char, c_int, c_uint, c_void};
 use std::ffi::CString;
 
 use crate::ffi::{self, ITEM_NUMBERFLAG_DOUBLE, ITEMTYPE_STRING, RING_FALSE, RingVM};

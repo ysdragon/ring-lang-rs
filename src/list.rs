@@ -1,4 +1,4 @@
-use libc::{c_char, c_double, c_int, c_uint, c_void};
+use crate::ctypes::{c_char, c_double, c_int, c_uint, c_void};
 use std::ffi::{CStr, CString};
 
 use crate::RingList;

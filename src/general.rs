@@ -1,4 +1,4 @@
-use libc::{c_char, c_double, c_int, c_uint};
+use crate::ctypes::{c_char, c_double, c_int, c_uint};
 use std::ffi::{CStr, CString};
 
 use crate::ffi;
@@ -19,7 +19,7 @@ pub fn ring_general_fexists_bytes(filename: &[u8]) -> bool {
 
 #[inline]
 pub fn ring_general_currentdir() -> Option<String> {
-    let mut buf = [0i8; 4096];
+    let mut buf = [0 as c_char; 4096];
     let result = unsafe { ffi::ring_general_currentdir(buf.as_mut_ptr()) };
     if result != 0 {
         unsafe {
@@ -33,7 +33,7 @@ pub fn ring_general_currentdir() -> Option<String> {
 
 #[inline]
 pub fn ring_general_exefilename() -> Option<String> {
-    let mut buf = [0i8; 4096];
+    let mut buf = [0 as c_char; 4096];
     let result = unsafe { ffi::ring_general_exefilename(buf.as_mut_ptr()) };
     if result != 0 {
         unsafe {
@@ -47,7 +47,7 @@ pub fn ring_general_exefilename() -> Option<String> {
 
 #[inline]
 pub fn ring_general_exefolder() -> Option<String> {
-    let mut buf = [0i8; 4096];
+    let mut buf = [0 as c_char; 4096];
     unsafe { ffi::ring_general_exefolder(buf.as_mut_ptr()) };
     unsafe {
         let cstr = CStr::from_ptr(buf.as_ptr());
@@ -91,7 +91,7 @@ pub fn ring_general_upper2(s: &mut [u8]) {
 
 #[inline]
 pub fn ring_general_numtostring(num: c_double, decimals: c_int) -> Option<String> {
-    let mut buf = [0i8; 64];
+    let mut buf = [0 as c_char; 64];
     unsafe {
         ffi::ring_general_numtostring(num, buf.as_mut_ptr(), decimals);
         let cstr = CStr::from_ptr(buf.as_ptr());

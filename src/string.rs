@@ -1,4 +1,4 @@
-use libc::{c_char, c_int, c_uint};
+use crate::ctypes::{c_char, c_int, c_uint};
 use std::ffi::CString;
 
 use crate::ffi::{self, RingString};
