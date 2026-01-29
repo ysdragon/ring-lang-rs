@@ -176,7 +176,7 @@ ring_func!(ring_hello, |p| {
 });
 
 ring_libinit! {
-    b"rust_hello\0" => ring_hello,
+    "rust_hello" => ring_hello,
 }
 ```
 
