@@ -444,7 +444,7 @@ fn ring_list_item_to_json(list: RingList, index: u32) -> Value {
 fn json_value_to_ring_list_item(p: *mut c_void, list: RingList, value: &Value) {
     match value {
         Value::Null => {
-            ring_list_addstring(list, b"null\0");
+            ring_list_addstring_str(list, "null");
         }
         Value::Bool(b) => {
             ring_list_addint(list, if *b { 1 } else { 0 });
@@ -457,7 +457,7 @@ fn json_value_to_ring_list_item(p: *mut c_void, list: RingList, value: &Value) {
             }
         }
         Value::String(s) => {
-            ring_list_addstring(list, format!("{}\0", s).as_bytes());
+            ring_list_addstring_str(list, s);
         }
         Value::Array(arr) => {
             let inner = ring_list_newlist(list);
@@ -469,7 +469,7 @@ fn json_value_to_ring_list_item(p: *mut c_void, list: RingList, value: &Value) {
             let inner = ring_list_newlist(list);
             for (key, val) in obj {
                 let pair = ring_list_newlist(inner);
-                ring_list_addstring(pair, format!("{}\0", key).as_bytes());
+                ring_list_addstring_str(pair, key);
                 json_value_to_ring_list_item(p, pair, val);
             }
         }
@@ -488,7 +488,7 @@ fn json_to_ring_list(p: *mut c_void, value: &Value) -> RingList {
         Value::Object(obj) => {
             for (key, val) in obj {
                 let pair = ring_list_newlist(list);
-                ring_list_addstring(pair, format!("{}\0", key).as_bytes());
+                ring_list_addstring_str(pair, key);
                 json_value_to_ring_list_item(p, pair, val);
             }
         }
