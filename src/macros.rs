@@ -10,12 +10,26 @@ macro_rules! ring_func {
 
 #[macro_export]
 macro_rules! ring_libinit {
-    ($($name:expr => $func:ident),* $(,)?) => {
+    (@cfg $state:ident [ ] { $($name:expr => $func:ident),* $(,)? }) => {
+        $( $crate::ring_register_function($state, $name, $func); )*
+    };
+    (@cfg $state:ident [ #[$attr:meta] $($rest:tt)* ] { $($body:tt)* }) => {
+        #[$attr]
+        { $crate::ring_libinit!(@cfg $state [ $($rest)* ] { $($body)* }); }
+    };
+    (@munch $state:ident) => {};
+    (@munch $state:ident $(#[$attr:meta])+ { $($name:expr => $func:ident),* $(,)? } $(, $($rest:tt)*)?) => {
+        $crate::ring_libinit!(@cfg $state [ $(#[$attr])* ] { $($name => $func),* });
+        $( $crate::ring_libinit!(@munch $state $($rest)*); )?
+    };
+    (@munch $state:ident $name:expr => $func:ident $(, $($rest:tt)*)?) => {
+        $crate::ring_register_function($state, $name, $func);
+        $( $crate::ring_libinit!(@munch $state $($rest)*); )?
+    };
+    ($($tt:tt)*) => {
         #[unsafe(no_mangle)]
         pub extern "C" fn ringlib_init(state: $crate::RingState) {
-            $(
-                $crate::ring_register_function(state, $name, $func);
-            )*
+            $crate::ring_libinit!(@munch state $($tt)*);
         }
     };
 }
