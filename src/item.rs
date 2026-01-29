@@ -1,4 +1,4 @@
-use crate::ctypes::{c_char, c_double, c_int, c_uint, c_void};
+use crate::ffi_types::{CString, c_char, c_double, c_int, c_uint, c_void};
 
 use crate::ffi::{
     self, ITEMTYPE_FUNCPOINTER, ITEMTYPE_LIST, ITEMTYPE_NOTHING, ITEMTYPE_NUMBER, ITEMTYPE_POINTER,

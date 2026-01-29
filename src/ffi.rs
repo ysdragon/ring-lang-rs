@@ -1,4 +1,4 @@
-use crate::ctypes::{c_char, c_double, c_int, c_uint, c_void, size_t};
+use crate::ffi_types::{c_char, c_double, c_int, c_uint, c_void, size_t};
 
 use crate::{RingFunc, RingState};
 

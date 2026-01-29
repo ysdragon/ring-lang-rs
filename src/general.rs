@@ -1,5 +1,4 @@
-use crate::ctypes::{c_char, c_double, c_int, c_uint};
-use std::ffi::{CStr, CString};
+use crate::ffi_types::{CStr, CString, c_char, c_double, c_int, c_uint};
 
 use crate::ffi;
 
