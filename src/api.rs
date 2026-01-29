@@ -341,3 +341,9 @@ pub fn ring_register_function(state: RingState, name: &[u8], func: RingFunc) {
         ffi::ring_vm_funcregister2(state, name.as_ptr() as *const c_char, func);
     }
 }
+
+pub fn ring_register_function_str(state: RingState, name: &str, func: RingFunc) {
+    unsafe {
+        ffi::ring_vm_funcregister2(state, name.as_ptr() as *const c_char, func);
+    }
+}
