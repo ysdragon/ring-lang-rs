@@ -10,20 +10,20 @@ macro_rules! ring_func {
 
 #[macro_export]
 macro_rules! ring_libinit {
-    (@cfg $state:ident [ ] { $($name:expr => $func:ident),* $(,)? }) => {
-        $( $crate::ring_register_function($state, $name, $func); )*
+    (@cfg $state:ident [ ] { $($name:literal => $func:ident),* $(,)? }) => {
+        $( $crate::ring_register_function_str($state, concat!($name, "\0"), $func); )*
     };
     (@cfg $state:ident [ #[$attr:meta] $($rest:tt)* ] { $($body:tt)* }) => {
         #[$attr]
         { $crate::ring_libinit!(@cfg $state [ $($rest)* ] { $($body)* }); }
     };
     (@munch $state:ident) => {};
-    (@munch $state:ident $(#[$attr:meta])+ { $($name:expr => $func:ident),* $(,)? } $(, $($rest:tt)*)?) => {
+    (@munch $state:ident $(#[$attr:meta])+ { $($name:literal => $func:ident),* $(,)? } $(, $($rest:tt)*)?) => {
         $crate::ring_libinit!(@cfg $state [ $(#[$attr])* ] { $($name => $func),* });
         $( $crate::ring_libinit!(@munch $state $($rest)*); )?
     };
-    (@munch $state:ident $name:expr => $func:ident $(, $($rest:tt)*)?) => {
-        $crate::ring_register_function($state, $name, $func);
+    (@munch $state:ident $name:literal => $func:ident $(, $($rest:tt)*)?) => {
+        $crate::ring_register_function_str($state, concat!($name, "\0"), $func);
         $( $crate::ring_libinit!(@munch $state $($rest)*); )?
     };
     ($($tt:tt)*) => {
