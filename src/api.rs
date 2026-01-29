@@ -259,13 +259,34 @@ pub fn ring_api_varvalue(p: *mut c_void, name: &[u8], ntype: c_int) {
 }
 
 #[inline]
+pub fn ring_api_varvalue_str(p: *mut c_void, name: &str, ntype: c_int) {
+    if let Ok(cstr) = CString::new(name) {
+        unsafe { ffi::ring_vm_api_varvalue(p, cstr.as_ptr(), ntype) }
+    }
+}
+
+#[inline]
 pub fn ring_api_intvalue(p: *mut c_void, name: &[u8]) {
     unsafe { ffi::ring_vm_api_intvalue(p, name.as_ptr() as *const c_char) }
 }
 
 #[inline]
+pub fn ring_api_intvalue_str(p: *mut c_void, name: &str) {
+    if let Ok(cstr) = CString::new(name) {
+        unsafe { ffi::ring_vm_api_intvalue(p, cstr.as_ptr()) }
+    }
+}
+
+#[inline]
 pub fn ring_api_floatvalue(p: *mut c_void, name: &[u8]) {
     unsafe { ffi::ring_vm_api_floatvalue(p, name.as_ptr() as *const c_char) }
+}
+
+#[inline]
+pub fn ring_api_floatvalue_str(p: *mut c_void, name: &str) {
+    if let Ok(cstr) = CString::new(name) {
+        unsafe { ffi::ring_vm_api_floatvalue(p, cstr.as_ptr()) }
+    }
 }
 
 #[inline]

@@ -201,6 +201,13 @@ pub fn ring_vm_callfuncwithouteval(vm: RingVM, func_name: &[u8], is_method: bool
 }
 
 #[inline]
+pub fn ring_vm_callfuncwithouteval_str(vm: RingVM, func_name: &str, is_method: bool) {
+    if let Ok(cstr) = CString::new(func_name) {
+        unsafe { ffi::ring_vm_callfuncwithouteval(vm, cstr.as_ptr(), is_method as c_uint) }
+    }
+}
+
+#[inline]
 pub fn ring_vm_showbytecode(vm: RingVM) {
     unsafe { ffi::ring_vm_showbytecode(vm) }
 }

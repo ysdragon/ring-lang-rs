@@ -56,6 +56,13 @@ pub fn ring_item_setstring(item: RingItem, s: &[u8]) {
 }
 
 #[inline]
+pub fn ring_item_setstring_str(item: RingItem, s: &str) {
+    if let Ok(cstr) = CString::new(s) {
+        unsafe { ffi::ring_item_setstring(item, cstr.as_ptr()) }
+    }
+}
+
+#[inline]
 pub fn ring_item_setstring2(item: RingItem, s: &[u8]) {
     unsafe { ffi::ring_item_setstring2(item, s.as_ptr() as *const c_char, s.len() as c_uint) }
 }
@@ -113,6 +120,13 @@ pub fn ring_itemarray_setpointer(items: *mut Item, index: c_uint, ptr: *mut c_vo
 #[inline]
 pub fn ring_itemarray_setstring(items: *mut Item, index: c_uint, s: &[u8]) {
     unsafe { ffi::ring_itemarray_setstring(items, index, s.as_ptr() as *const c_char) }
+}
+
+#[inline]
+pub fn ring_itemarray_setstring_str(items: *mut Item, index: c_uint, s: &str) {
+    if let Ok(cstr) = CString::new(s) {
+        unsafe { ffi::ring_itemarray_setstring(items, index, cstr.as_ptr()) }
+    }
 }
 
 #[inline]
