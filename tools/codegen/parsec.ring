@@ -1396,7 +1396,7 @@ Func GenerateLibInit aFunctionsList
     
     for i = 1 to len(aFunctionsList)
         aReg = aFunctionsList[i]
-        cCode += C_TABS_1 + 'b"' + aReg[1] + '\0" => ' + aReg[2]
+        cCode += C_TABS_1 + '"' + aReg[1] + '" => ' + aReg[2]
         if i < len(aFunctionsList)
             cCode += ","
         ok
