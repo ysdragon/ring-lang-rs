@@ -123,13 +123,13 @@ ring_func!(ring_sum_list, |p| {
 });
 
 ring_libinit! {
-    b"rust_hello\0" => ring_hello_world,
-    b"rust_add\0" => ring_add_numbers,
-    b"rust_greet\0" => ring_greet,
-    b"rust_list\0" => ring_create_list,
-    b"rust_struct\0" => ring_create_struct,
-    b"rust_managed_struct\0" => ring_create_managed_struct,
-    b"rust_struct_value\0" => ring_get_struct_value,
-    b"rust_struct_name\0" => ring_get_struct_name,
-    b"rust_sum\0" => ring_sum_list,
+    "rust_hello" => ring_hello_world,
+    "rust_add" => ring_add_numbers,
+    "rust_greet" => ring_greet,
+    "rust_list" => ring_create_list,
+    "rust_struct" => ring_create_struct,
+    "rust_managed_struct" => ring_create_managed_struct,
+    "rust_struct_value" => ring_get_struct_value,
+    "rust_struct_name" => ring_get_struct_name,
+    "rust_sum" => ring_sum_list,
 }
