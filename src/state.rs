@@ -24,6 +24,7 @@ pub fn ring_state_runcode(state: RingState, code: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_state_runcode`].
 pub fn ring_state_runcode_str(state: RingState, code: &str) {
     if let Ok(cstr) = CString::new(code) {
         unsafe { ffi::ring_state_runcode(state, cstr.as_ptr()) }
@@ -36,6 +37,7 @@ pub fn ring_state_findvar(state: RingState, name: &[u8]) -> RingList {
 }
 
 #[inline]
+/// String variant of [`ring_state_findvar`].
 pub fn ring_state_findvar_str(state: RingState, name: &str) -> RingList {
     if let Ok(cstr) = CString::new(name) {
         unsafe { ffi::ring_state_findvar(state, cstr.as_ptr()) }
@@ -50,6 +52,7 @@ pub fn ring_state_newvar(state: RingState, name: &[u8]) -> RingList {
 }
 
 #[inline]
+/// String variant of [`ring_state_newvar`].
 pub fn ring_state_newvar_str(state: RingState, name: &str) -> RingList {
     if let Ok(cstr) = CString::new(name) {
         unsafe { ffi::ring_state_newvar(state, cstr.as_ptr()) }
@@ -64,6 +67,7 @@ pub fn ring_state_runfile(state: RingState, filename: &[u8]) -> c_int {
 }
 
 #[inline]
+/// String variant of [`ring_state_runfile`].
 pub fn ring_state_runfile_str(state: RingState, filename: &str) -> c_int {
     if let Ok(cstr) = CString::new(filename) {
         unsafe { ffi::ring_state_runfile(state, cstr.as_ptr()) }
@@ -78,6 +82,7 @@ pub fn ring_state_runstring(state: RingState, code: &[u8]) -> c_int {
 }
 
 #[inline]
+/// String variant of [`ring_state_runstring`].
 pub fn ring_state_runstring_str(state: RingState, code: &str) -> c_int {
     if let Ok(cstr) = CString::new(code) {
         unsafe { ffi::ring_state_runstring(state, cstr.as_ptr()) }
@@ -117,6 +122,7 @@ pub fn ring_state_log(state: RingState, msg: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_state_log`].
 pub fn ring_state_log_str(state: RingState, msg: &str) {
     if let Ok(cstr) = CString::new(msg) {
         unsafe { ffi::ring_state_log(state, cstr.as_ptr()) }

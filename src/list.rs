@@ -44,6 +44,7 @@ pub fn ring_list_addstring(list: RingList, s: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_list_addstring`].
 pub fn ring_list_addstring_str(list: RingList, s: &str) {
     if let Ok(cstr) = CString::new(s) {
         unsafe { ffi::ring_list_addstring(list, cstr.as_ptr()) }
@@ -81,6 +82,7 @@ pub fn ring_list_getstring(list: RingList, index: c_uint) -> *const c_char {
 }
 
 #[inline]
+/// String variant of [`ring_list_getstring`]. Returns owned String.
 pub fn ring_list_getstring_str(list: RingList, index: c_uint) -> String {
     unsafe {
         let ptr = ffi::ring_list_getstring(list, index);
@@ -123,6 +125,7 @@ pub fn ring_list_setstring(list: RingList, index: c_uint, s: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_list_setstring`].
 pub fn ring_list_setstring_str(list: RingList, index: c_uint, s: &str) {
     if let Ok(cstr) = CString::new(s) {
         unsafe { ffi::ring_list_setstring(list, index, cstr.as_ptr()) }
@@ -157,6 +160,7 @@ pub fn ring_list_insertstring(list: RingList, pos: c_uint, s: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_list_insertstring`].
 pub fn ring_list_insertstring_str(list: RingList, pos: c_uint, s: &str) {
     if let Ok(cstr) = CString::new(s) {
         unsafe { ffi::ring_list_insertstring(list, pos, cstr.as_ptr()) }
@@ -216,6 +220,7 @@ pub fn ring_list_findstring(list: RingList, s: &[u8], column: c_uint) -> c_uint 
 }
 
 #[inline]
+/// String variant of [`ring_list_findstring`].
 pub fn ring_list_findstring_str(list: RingList, s: &str, column: c_uint) -> c_uint {
     if let Ok(cstr) = CString::new(s) {
         unsafe { ffi::ring_list_findstring(list, cstr.as_ptr(), column) }
@@ -290,6 +295,7 @@ pub fn ring_list_sortstr(list: RingList, left: c_uint, right: c_uint, column: c_
 }
 
 #[inline]
+/// String variant of [`ring_list_sortstr`].
 pub fn ring_list_sortstr_str(
     list: RingList,
     left: c_uint,

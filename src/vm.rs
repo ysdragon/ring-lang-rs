@@ -8,6 +8,7 @@ pub fn ring_vm_callfunction(vm: RingVM, func_name: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_vm_callfunction`].
 pub fn ring_vm_callfunction_str(vm: RingVM, func_name: &str) {
     if let Ok(cstr) = CString::new(func_name) {
         unsafe { ffi::ring_vm_callfunction(vm, cstr.as_ptr()) }
@@ -35,6 +36,7 @@ pub fn ring_vm_runcodefromthread(vm: RingVM, code: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_vm_runcodefromthread`].
 pub fn ring_vm_runcodefromthread_str(vm: RingVM, code: &str) {
     if let Ok(cstr) = CString::new(code) {
         unsafe { ffi::ring_vm_runcodefromthread(vm, cstr.as_ptr()) }
@@ -69,6 +71,7 @@ pub fn ring_vm_loadfunc2(vm: RingVM, func_name: &[u8], performance: c_int) -> bo
 }
 
 #[inline]
+/// String variant of [`ring_vm_loadfunc2`].
 pub fn ring_vm_loadfunc2_str(vm: RingVM, func_name: &str) -> bool {
     if let Ok(cstr) = CString::new(func_name) {
         unsafe { ffi::ring_vm_loadfunc2(vm, cstr.as_ptr(), RING_FALSE) != 0 }
@@ -158,6 +161,7 @@ pub fn ring_vm_runcode(vm: RingVM, code: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_vm_runcode`].
 pub fn ring_vm_runcode_str(vm: RingVM, code: &str) {
     if let Ok(cstr) = CString::new(code) {
         unsafe { ffi::ring_vm_runcode(vm, cstr.as_ptr()) }
@@ -175,6 +179,7 @@ pub fn ring_vm_stringtonum(vm: RingVM, s: &[u8]) -> f64 {
 }
 
 #[inline]
+/// String variant of [`ring_vm_stringtonum`].
 pub fn ring_vm_stringtonum_str(vm: RingVM, s: &str) -> f64 {
     if let Ok(cstr) = CString::new(s) {
         unsafe { ffi::ring_vm_stringtonum(vm, cstr.as_ptr()) }
@@ -200,6 +205,7 @@ pub fn ring_vm_callfuncwithouteval(vm: RingVM, func_name: &[u8], is_method: bool
 }
 
 #[inline]
+/// String variant of [`ring_vm_callfuncwithouteval`].
 pub fn ring_vm_callfuncwithouteval_str(vm: RingVM, func_name: &str, is_method: bool) {
     if let Ok(cstr) = CString::new(func_name) {
         unsafe { ffi::ring_vm_callfuncwithouteval(vm, cstr.as_ptr(), is_method as c_uint) }
@@ -217,6 +223,7 @@ pub fn ring_vm_showerrormessage(vm: RingVM, msg: &[u8]) {
 }
 
 #[inline]
+/// String variant of [`ring_vm_showerrormessage`].
 pub fn ring_vm_showerrormessage_str(vm: RingVM, msg: &str) {
     if let Ok(cstr) = CString::new(msg) {
         unsafe { ffi::ring_vm_showerrormessage(vm, cstr.as_ptr()) }

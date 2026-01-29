@@ -7,6 +7,7 @@ pub fn ring_string_new(s: &[u8]) -> RingString {
     unsafe { ffi::ring_string_new(s.as_ptr() as *const c_char) }
 }
 
+/// String variant of [`ring_string_new`] - accepts `&str` instead of `&[u8]`.
 #[inline]
 pub fn ring_string_new_str(s: &str) -> RingString {
     if let Ok(cstr) = CString::new(s) {
@@ -31,6 +32,7 @@ pub fn ring_string_set(s: RingString, val: &[u8]) {
     unsafe { ffi::ring_string_set(s, val.as_ptr() as *const c_char) }
 }
 
+/// String variant of [`ring_string_set`].
 #[inline]
 pub fn ring_string_set_str(s: RingString, val: &str) {
     if let Ok(cstr) = CString::new(val) {
@@ -48,6 +50,7 @@ pub fn ring_string_add(s: RingString, val: &[u8]) {
     unsafe { ffi::ring_string_add(s, val.as_ptr() as *const c_char) }
 }
 
+/// String variant of [`ring_string_add`].
 #[inline]
 pub fn ring_string_add_str(s: RingString, val: &str) {
     if let Ok(cstr) = CString::new(val) {
@@ -80,6 +83,7 @@ pub fn ring_string_strdup(s: &[u8]) -> *mut c_char {
     unsafe { ffi::ring_string_strdup(s.as_ptr() as *const c_char) }
 }
 
+/// String variant of [`ring_string_strdup`].
 #[inline]
 pub fn ring_string_strdup_str(s: &str) -> *mut c_char {
     if let Ok(cstr) = CString::new(s) {
