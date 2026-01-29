@@ -137,8 +137,8 @@ use quote::{format_ident, quote};
 use std::collections::HashSet;
 use syn::parse::{Parse, ParseStream};
 use syn::{
-    parse_macro_input, FnArg, Ident, ImplItem, ImplItemFn, Item, ItemFn, ItemImpl, ItemStruct, Pat,
-    ReturnType, Token, Type, Visibility,
+    FnArg, Ident, ImplItem, ImplItemFn, Item, ItemFn, ItemImpl, ItemStruct, Pat, ReturnType, Token,
+    Type, Visibility, parse_macro_input,
 };
 
 struct RingExtension {
@@ -546,14 +546,14 @@ fn generate_field_getter(
             quote! {
                 match &obj.#field_name {
                     Some(__val) => ring_ret_number!(p, *__val as f64),
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         } else if is_string_type(&inner) {
             quote! {
                 match &obj.#field_name {
                     Some(__val) => ring_ret_string!(p, __val),
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         } else if is_struct_type(&inner) {
@@ -563,14 +563,14 @@ fn generate_field_getter(
                     Some(__val) => {
                         ring_ret_cpointer!(p, Box::into_raw(Box::new(__val.clone())), #inner_type_const);
                     }
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         } else {
             quote! {
                 match &obj.#field_name {
                     Some(__val) => ring_ret_number!(p, *__val as f64),
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         }
@@ -1177,7 +1177,7 @@ fn generate_vec_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                 for __item in __result {
                     match __item {
                         Some(__val) => ring_list_adddouble(__list, __val as f64),
-                        None => ring_list_addstring(__list, b"\0"),
+                        None => ring_list_newitem(__list),
                     }
                 }
                 ring_ret_list!(p, __list);
@@ -1189,7 +1189,7 @@ fn generate_vec_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                 for __item in __result {
                     match __item {
                         Some(__val) => ring_list_addstring_str(__list, &__val),
-                        None => ring_list_addstring(__list, b"\0"),
+                        None => ring_list_newitem(__list),
                     }
                 }
                 ring_ret_list!(p, __list);
@@ -1205,7 +1205,7 @@ fn generate_vec_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                             let __ptr = Box::into_raw(Box::new(__val));
                             ring_list_addcpointer(__list, __ptr as *mut std::ffi::c_void, #type_const);
                         }
-                        None => ring_list_addstring(__list, b"\0"),
+                        None => ring_list_newitem(__list),
                     }
                 }
                 ring_ret_list!(p, __list);
@@ -1217,7 +1217,7 @@ fn generate_vec_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                 for __item in __result {
                     match __item {
                         Some(__val) => ring_list_adddouble(__list, __val as f64),
-                        None => ring_list_addstring(__list, b"\0"),
+                        None => ring_list_newitem(__list),
                     }
                 }
                 ring_ret_list!(p, __list);
@@ -1281,7 +1281,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
             let __result = #call;
             match __result {
                 Some(__val) => ring_ret_number!(p, __val as f64),
-                None => ring_ret_string!(p, ""),
+                None => {},
             }
         }
     } else if is_string_type(&inner) {
@@ -1289,7 +1289,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
             let __result = #call;
             match __result {
                 Some(__val) => ring_ret_string!(p, &__val),
-                None => ring_ret_string!(p, ""),
+                None => {},
             }
         }
     } else if is_vec_type(&inner) {
@@ -1305,7 +1305,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                         }
                         ring_ret_list!(p, __list);
                     }
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         } else if is_string_type(&vec_inner) {
@@ -1319,7 +1319,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                         }
                         ring_ret_list!(p, __list);
                     }
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         } else if is_struct_type(&vec_inner) {
@@ -1335,7 +1335,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                         }
                         ring_ret_list!(p, __list);
                     }
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         } else {
@@ -1349,7 +1349,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                         }
                         ring_ret_list!(p, __list);
                     }
-                    None => ring_ret_string!(p, ""),
+                    None => {},
                 }
             }
         }
@@ -1361,7 +1361,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
                 Some(__val) => {
                     ring_ret_cpointer!(p, Box::into_raw(Box::new(__val)), #type_const);
                 }
-                None => ring_ret_string!(p, ""),
+                None => {},
             }
         }
     } else {
@@ -1369,7 +1369,7 @@ fn generate_option_return(type_str: &str, call: TokenStream2) -> TokenStream2 {
             let __result = #call;
             match __result {
                 Some(__val) => ring_ret_number!(p, __val as f64),
-                None => ring_ret_string!(p, ""),
+                None => {},
             }
         }
     }
