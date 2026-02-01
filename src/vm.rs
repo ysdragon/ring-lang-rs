@@ -288,11 +288,11 @@ pub fn ring_vm_statecustmutexunlock(state: *mut c_void, mutex_index: c_uint) {
 pub fn ring_vm_mutexfunctions(
     vm: RingVM,
     create: Option<extern "C" fn() -> *mut c_void>,
-    destroy: Option<extern "C" fn(*mut c_void)>,
     lock: Option<extern "C" fn(*mut c_void)>,
     unlock: Option<extern "C" fn(*mut c_void)>,
+    destroy: Option<extern "C" fn(*mut c_void)>,
 ) {
-    unsafe { ffi::ring_vm_mutexfunctions(vm, create, destroy, lock, unlock) }
+    unsafe { ffi::ring_vm_mutexfunctions(vm, create, lock, unlock, destroy) }
 }
 
 /// RAII guard for custom mutex
