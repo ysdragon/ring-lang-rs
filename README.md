@@ -131,7 +131,7 @@ cargo build --release
 
 ### Environment Variables
 
-Optional: Set `RING` (or `ring`) to your Ring installation directory:
+Set `RING` (or `ring`) to your Ring installation directory:
 
 ```bash
 # Linux/macOS
@@ -144,7 +144,7 @@ $env:RING = "C:\path\to\ring"
 set RING=C:\path\to\ring
 ```
 
-If not set, the system's libring will be used.
+Required for static linking. For dynamic linking, the system's libring will be used if not set.
 
 ### Quick Start
 
@@ -414,6 +414,90 @@ fn main() {
 | `ring_state_delete()` | - | Clean up and free the state |
 
 See `examples/embed/` for a complete working example.
+
+---
+
+## Static Linking
+
+When targeting platforms without dynamic library support (Android, WASM) or when you prefer static linking (`--features static`), `loadlib()` is not available. Extensions must be registered during VM initialization.
+
+Two approaches are supported:
+
+### Approach 1: Pure Rust (Recommended)
+
+Enable the `extension` feature and use `ring_register_extension()`:
+
+```toml
+[dependencies]
+ring-lang-rs = { version = "0.1", features = ["extension", "static"] }
+```
+
+```rust
+use ring_lang_rs::*;
+
+fn main() {
+    // Register your extension before creating any Ring state
+    ring_register_extension(ringlib_init);
+    
+    // Now ring_state_new() will automatically call your ringlib_init
+    let state = ring_state_new();
+    ring_state_runfile_str(state, "main.ring");
+    ring_state_delete(state);
+}
+```
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| `extension` | Enables Rust-based `ring_vm_extension()`, exports `ring_register_extension()` |
+| `ring-std` | (default) Loads all Ring standard modules |
+| `ring-list` | List manipulation functions |
+| `ring-math` | Math functions |
+| `ring-file` | File I/O functions (disabled on WASM) |
+| `ring-os` | OS functions (disabled on WASM) |
+| `ring-dll` | Dynamic loading (disabled on Android/WASM) |
+| `ring-refmeta` | Reflection/meta-programming |
+| `ring-info` | VM information functions |
+
+### Approach 2: Custom ext.c (Advanced)
+
+For users who need full control or are integrating with existing C code:
+
+```bash
+export RING_EXT_C=/path/to/your/ext.c
+```
+
+Example `ext.c`:
+```c
+#include "ring.h"
+
+extern void ringlib_init(RingState *pRingState);
+
+void ring_vm_extension(RingState *pRingState) {
+    ring_vm_list_loadfunctions(pRingState);
+    ring_vm_math_loadfunctions(pRingState);
+    ring_vm_file_loadfunctions(pRingState);
+    ring_vm_os_loadfunctions(pRingState);
+    ring_vm_refmeta_loadfunctions(pRingState);
+    ring_vm_info_loadfunctions(pRingState);
+    
+    // Your extension
+    ringlib_init(pRingState);
+}
+```
+
+### Comparison
+
+| Aspect | Pure Rust (`extension`) | Custom ext.c (`RING_EXT_C`) |
+|--------|------------------------|----------------------------|
+| Language | Rust only | Requires C |
+| Setup | Add feature flag | Write C file, set env var |
+| Module control | Via Cargo features | Manual in C code |
+| Multiple extensions | `ring_register_extension()` multiple times | Add calls in ext.c |
+| Best for | Most users | C interop, legacy projects |
+
+---
 
 ## License
 

@@ -29,6 +29,8 @@
 #![allow(clippy::manual_c_str_literals)]
 
 pub mod api;
+#[cfg(feature = "extension")]
+pub mod extension;
 pub mod ffi;
 mod ffi_types;
 pub mod general;
@@ -43,6 +45,8 @@ pub mod vm;
 pub mod macros;
 
 pub use api::*;
+#[cfg(feature = "extension")]
+pub use extension::*;
 pub use general::*;
 pub use item::*;
 pub use list::*;

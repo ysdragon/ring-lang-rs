@@ -575,4 +575,13 @@ unsafe extern "C" {
     pub fn ring_vm_loadcfunctions(pRingState: RingState);
     pub fn ring_vm_generallib_loadfunctions(pRingState: RingState);
     pub fn ring_vm_loadcode(pVM: RingVM);
+
+    // Extension module loaders (called by ring_vm_extension)
+    pub fn ring_vm_list_loadfunctions(pRingState: RingState);
+    pub fn ring_vm_math_loadfunctions(pRingState: RingState);
+    pub fn ring_vm_file_loadfunctions(pRingState: RingState);
+    pub fn ring_vm_os_loadfunctions(pRingState: RingState);
+    pub fn ring_vm_dll_loadfunctions(pRingState: RingState);
+    pub fn ring_vm_refmeta_loadfunctions(pRingState: RingState);
+    pub fn ring_vm_info_loadfunctions(pRingState: RingState);
 }

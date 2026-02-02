@@ -9,16 +9,27 @@ fn main() {
     let is_android = target_os == "android";
     let is_wasm = target_arch == "wasm32";
 
+    let use_rust_extension = env::var("CARGO_FEATURE_EXTENSION").is_ok();
+
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=RING");
     println!("cargo:rerun-if-env-changed=ring");
+    println!("cargo:rerun-if-env-changed=RING_EXT_C");
 
     if no_link {
         return;
     }
 
-    if use_static || is_android || is_wasm {
-        compile_ring_from_source(&target_os, is_wasm);
+    let will_static_link = use_static || is_android || is_wasm;
+
+    if use_rust_extension && !will_static_link {
+        println!(
+            "cargo:warning=The 'extension' feature requires static linking. Enable 'static' feature or target Android/WASM. Ignoring 'extension' feature for dynamic linking."
+        );
+    }
+
+    if will_static_link {
+        compile_ring_from_source(&target_os, is_wasm, use_rust_extension);
         return;
     }
 
@@ -32,7 +43,7 @@ fn get_ring_home() -> PathBuf {
         .expect("RING environment variable must be set to Ring installation directory")
 }
 
-fn compile_ring_from_source(target_os: &str, is_wasm: bool) {
+fn compile_ring_from_source(target_os: &str, is_wasm: bool, use_rust_extension: bool) {
     let ring_home = get_ring_home();
     let src_dir = ring_home.join("language/src");
     let include_dir = ring_home.join("language/include");
@@ -46,8 +57,28 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool) {
 
     let is_android = target_os == "android";
 
-    // Files to exclude from compilation
-    let excluded_files: Vec<&str> = if is_android {
+    // Exclude ext.c when using Rust extension feature or custom ext.c
+    let custom_ext_c = env::var("RING_EXT_C").ok().map(PathBuf::from);
+    let has_custom_ext = custom_ext_c
+        .as_ref()
+        .is_some_and(|p| p.exists() && p.is_file());
+
+    if let Some(ref path) = custom_ext_c {
+        println!("cargo:rerun-if-changed={}", path.display());
+        if has_custom_ext {
+            println!(
+                "cargo:warning=Using custom ext.c from RING_EXT_C: {}",
+                path.display()
+            );
+        } else {
+            println!(
+                "cargo:warning=RING_EXT_C set but file not found: {}",
+                path.display()
+            );
+        }
+    }
+
+    let mut excluded_files: Vec<&str> = if is_android {
         vec!["ring.c", "ringw.c", "dll_e.c"]
     } else if is_wasm {
         vec!["ring.c", "ringw.c", "dll_e.c", "os_e.c", "file_e.c"]
@@ -55,7 +86,11 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool) {
         vec!["ring.c", "ringw.c"]
     };
 
-    let sources: Vec<PathBuf> = std::fs::read_dir(&src_dir)
+    if use_rust_extension || has_custom_ext {
+        excluded_files.push("ext.c");
+    }
+
+    let mut sources: Vec<PathBuf> = std::fs::read_dir(&src_dir)
         .expect("Failed to read Ring source directory")
         .filter_map(|e| e.ok())
         .map(|e| e.path())
@@ -67,6 +102,10 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool) {
                 })
         })
         .collect();
+
+    if has_custom_ext {
+        sources.push(custom_ext_c.unwrap());
+    }
 
     let mut build = cc::Build::new();
     build
