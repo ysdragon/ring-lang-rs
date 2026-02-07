@@ -26,6 +26,12 @@ macro_rules! ring_libinit {
         $crate::ring_register_function_str($state, concat!($name, "\0"), $func);
         $( $crate::ring_libinit!(@munch $state $($rest)*); )?
     };
+    ($($name:literal => $func:ident),* $(,)?) => {
+        #[unsafe(no_mangle)]
+        pub extern "C" fn ringlib_init(state: $crate::RingState) {
+            $( $crate::ring_register_function_str(state, concat!($name, "\0"), $func); )*
+        }
+    };
     ($($tt:tt)*) => {
         #[unsafe(no_mangle)]
         pub extern "C" fn ringlib_init(state: $crate::RingState) {
