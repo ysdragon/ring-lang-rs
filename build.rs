@@ -117,8 +117,12 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool, use_rust_extension: 
         .pic(true); // Use cc's smart PIC handling
 
     match target_os {
-        "android" | "ios" => {
+        "android" => {
             build.define("RING_NODLL", "1");
+        }
+        "ios" => {
+            build.define("RING_NODLL", "1");
+            build.define("RING_LIMITEDSYS", "1");
         }
         "windows" => {
             // Handle static CRT when requested
