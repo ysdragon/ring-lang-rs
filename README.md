@@ -100,6 +100,7 @@ The rest of this document covers how to **create Ring extensions in Rust** or **
 | Windows | ✅ | ✅ | x86_64, x86 (MSVC & GNU) |
 | FreeBSD | ✅ | ✅ | x86_64, ARM64 |
 | Android | ✅ | - | ARM64, ARMv7, x86_64, x86 |
+| iOS | ✅ | - | ARM64, x86_64 (Intel simulator) |
 | WASM (WASI/Emscripten) | ✅ | - | wasm32 |
 
 **Other Unix-like systems** (OpenBSD, NetBSD, DragonFly BSD, Solaris, etc.) are supported via the generic Unix build path. Any target supported by Rust's `std` and LLVM should work.
