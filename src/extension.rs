@@ -30,6 +30,7 @@ pub extern "C" fn ring_vm_extension(state: RingState) {
         #[cfg(all(
             feature = "ring-dll",
             not(target_os = "android"),
+            not(target_os = "ios"),
             not(target_arch = "wasm32")
         ))]
         ffi::ring_vm_dll_loadfunctions(state);

@@ -7,6 +7,7 @@ fn main() {
     let use_static = env::var("CARGO_FEATURE_STATIC").is_ok();
     let no_link = env::var("CARGO_FEATURE_NO_LINK").is_ok();
     let is_android = target_os == "android";
+    let is_ios = target_os == "ios";
     let is_wasm = target_arch == "wasm32";
 
     let use_rust_extension = env::var("CARGO_FEATURE_EXTENSION").is_ok();
@@ -20,11 +21,11 @@ fn main() {
         return;
     }
 
-    let will_static_link = use_static || is_android || is_wasm;
+    let will_static_link = use_static || is_android || is_ios || is_wasm;
 
     if use_rust_extension && !will_static_link {
         println!(
-            "cargo:warning=The 'extension' feature requires static linking. Enable 'static' feature or target Android/WASM. Ignoring 'extension' feature for dynamic linking."
+            "cargo:warning=The 'extension' feature requires static linking. Enable 'static' feature or target Android/iOS/WASM. Ignoring 'extension' feature for dynamic linking."
         );
     }
 
@@ -56,6 +57,7 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool, use_rust_extension: 
     }
 
     let is_android = target_os == "android";
+    let is_ios = target_os == "ios";
 
     // Exclude ext.c when using Rust extension feature or custom ext.c
     let custom_ext_c = env::var("RING_EXT_C").ok().map(PathBuf::from);
@@ -78,7 +80,7 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool, use_rust_extension: 
         }
     }
 
-    let mut excluded_files: Vec<&str> = if is_android {
+    let mut excluded_files: Vec<&str> = if is_android || is_ios {
         vec!["ring.c", "ringw.c", "dll_e.c"]
     } else if is_wasm {
         vec!["ring.c", "ringw.c", "dll_e.c", "os_e.c", "file_e.c"]
@@ -115,7 +117,7 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool, use_rust_extension: 
         .pic(true); // Use cc's smart PIC handling
 
     match target_os {
-        "android" => {
+        "android" | "ios" => {
             build.define("RING_NODLL", "1");
         }
         "windows" => {
@@ -144,7 +146,7 @@ fn compile_ring_from_source(target_os: &str, is_wasm: bool, use_rust_extension: 
     // Link system libraries (not needed for Windows/WASM)
     if target_os != "windows" && !is_wasm {
         println!("cargo:rustc-link-lib=m");
-        if target_os != "android" {
+        if target_os != "android" && target_os != "ios" {
             println!("cargo:rustc-link-lib=dl");
         }
     }
